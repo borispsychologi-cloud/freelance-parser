@@ -14,6 +14,8 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser(description="Парсер Wildberries с мониторингом цен")
     parser.add_argument("--query", type=str, default="кроссовки", help="Поисковый запрос (например, 'кроссовки мужские')")
+    parser.add_argument("--schedule", action="store_true", help="Запускать парсер ежедневно по расписанию")
+
     return parser.parse_args()
 
 
@@ -524,27 +526,35 @@ def run_parser():
     print(f"\nГотово! {datetime.now().strftime('%H:%M:%S')}")
 
 
-def main():
-    if RUN_MODE == "schedule":
-        print(f"Расписание: запуск каждый день в {RUN_TIME}")
-        print("Ожидание... (Ctrl+C для остановки)\n")
-        schedule.every().day.at(RUN_TIME).do(run_parser)
-        run_parser()  # первый запуск сразу
-        while True:
-            schedule.run_pending()
-            time.sleep(60)
-    else:
-        run_parser()
+def scheduled_main():
+    print(f"Расписание: запуск каждый день в {RUN_TIME}")
+    print("Ожидание... (Ctrl+C для остановки)\n")
+
+    schedule.every().day.at(RUN_TIME).do(run_parser)
+    run_parser()  # первый запуск сразу
+
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
 
 
 def main():
     args = get_args()
+
     global SEARCH_QUERY
     SEARCH_QUERY = args.query
+
     print(f"Запускаю парсер для запроса: '{SEARCH_QUERY}'")
-    run_parser()
+
+    if args.schedule:
+        scheduled_main()
+    else:
+        run_parser()
 
 
 if __name__ == "__main__":
     main()
+
+
+
 
